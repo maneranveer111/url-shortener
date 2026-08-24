@@ -1,8 +1,11 @@
 const express = require('express')
+const urlRoutes = require('./routes/url.routes')
 
 const app = express()
 
 app.use(express.json())
+
+app.use('/api', urlRoutes)
 
 app.get('/', (req, res) => {
   res.json({
@@ -17,5 +20,8 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   })
 })
+
+const { redirectUrl } = require('./controllers/url.controller')
+app.get('/:shortCode', redirectUrl)
 
 module.exports = app
