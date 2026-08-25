@@ -4,6 +4,7 @@ require('dotenv').config()
 const app = require('./src/app')
 const redis = require('./src/config/redis')
 const prisma = require('./src/config/database')
+const { startAnalyticsWorker } = require('./src/workers/analyticsWorker')
 
 const PORT = process.env.PORT || 3000
 
@@ -12,6 +13,7 @@ async function startServer() {
     await prisma.$connect()
     console.log('Database connected successfully')
 
+    startAnalyticsWorker()
 
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`)

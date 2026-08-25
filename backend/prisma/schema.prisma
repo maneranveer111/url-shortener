@@ -15,5 +15,21 @@ model Url {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  clicks      Click[]
+
   @@map("urls")
+}
+
+model Click {
+  id        Int      @id @default(autoincrement())
+  
+  urlId     Int      @map("url_id")
+  
+  clickedAt DateTime @default(now()) @map("clicked_at")
+  
+  userAgent String?  @map("user_agent")
+
+  url       Url      @relation(fields: [urlId], references: [id])
+
+  @@map("clicks")
 }

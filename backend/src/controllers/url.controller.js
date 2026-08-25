@@ -1,4 +1,5 @@
 const { createShortUrl, getUrlByShortCode } = require('../services/url.service')
+const { trackClick } = require('../services/analytics.service')
 const { isValidUrl, isValidCustomCode } = require('../utils/urlValidator')
 
 async function shortenUrl(req, res) {
@@ -40,7 +41,6 @@ async function shortenUrl(req, res) {
     })
 
   } catch (error) {
-
     if (error.message === 'CUSTOM_CODE_TAKEN') {
       return res.status(409).json({
         success: false,
@@ -56,7 +56,6 @@ async function shortenUrl(req, res) {
   }
 }
 
-
 async function redirectUrl(req, res) {
   try {
     const { shortCode } = req.params
@@ -69,6 +68,8 @@ async function redirectUrl(req, res) {
         error: 'Short URL not found'
       })
     }
+
+    trackClick(shortCode, req.headers['user-agent'], result.id)
 
     return res.redirect(302, result.originalUrl)
 

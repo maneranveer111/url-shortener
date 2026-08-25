@@ -34,7 +34,7 @@ async function createShortUrl(originalUrl, customCode = null) {
       }
     })
 
-    await cacheUrl(newUrl.shortCode, newUrl.originalUrl)
+    await cacheUrl(newUrl.shortCode, newUrl.originalUrl, newUrl.id)
 
     return newUrl
   }
@@ -53,18 +53,20 @@ async function createShortUrl(originalUrl, customCode = null) {
     data: { shortCode }
   })
 
-  await cacheUrl(updatedUrl.shortCode, updatedUrl.originalUrl)
+  await cacheUrl(updatedUrl.shortCode, updatedUrl.originalUrl, updatedUrl.id)
 
   return updatedUrl
 }
 
 async function getUrlByShortCode(shortCode) {
 
-  const cachedUrl = await redis.get(`url:${shortCode}`)
+  const cachedData = await redis.get(`url:${shortCode}`)
 
-  if (cachedUrl) {
+  if (cachedData) {
     console.log(`Cache HIT for ${shortCode}`)
-    return { originalUrl: cachedUrl, fromCache: true }
+
+    const parsed = JSON.parse(cachedData)
+    return { originalUrl: parsed.originalUrl, id: parsed.id, fromCache: true }
   }
 
   console.log(`Cache MISS for ${shortCode}`)
@@ -72,19 +74,17 @@ async function getUrlByShortCode(shortCode) {
     where: { shortCode }
   })
 
-  if (!url) {
-    return null
-  }
+  if (!url) return null
 
-  await cacheUrl(url.shortCode, url.originalUrl)
+  await cacheUrl(url.shortCode, url.originalUrl, url.id)
 
   return url
 }
 
 
-async function cacheUrl(shortCode, originalUrl) {
-    
-  await redis.set(`url:${shortCode}`, originalUrl, 'EX', CACHE_TTL)
+async function cacheUrl(shortCode, originalUrl, urlId) {
+  const cacheData = JSON.stringify({ originalUrl, id: urlId })
+  await redis.set(`url:${shortCode}`, cacheData, 'EX', CACHE_TTL)
 }
 
 module.exports = {
