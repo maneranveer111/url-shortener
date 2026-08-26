@@ -1,11 +1,14 @@
 const express = require('express')
 const urlRoutes = require('./routes/url.routes')
+const analyticsRoutes = require('./routes/analytics.routes')
 
 const app = express()
 
 app.use(express.json())
 
 app.use('/api', urlRoutes)
+
+app.use('/api/analytics', analyticsRoutes)
 
 app.get('/', (req, res) => {
   res.json({
