@@ -16,7 +16,12 @@ async function processClickQueue() {
     console.log(`Analytics worker: processing ${queueLength} clicks`)
 
     const itemsToProcess = Math.min(queueLength, BATCH_SIZE)
-    const rawClicks = await redis.lpop(ANALYTICS_QUEUE_KEY, itemsToProcess)
+    const pipeline = redis.pipeline()
+    for (let i = 0; i < itemsToProcess; i++) {
+      pipeline.lpop(ANALYTICS_QUEUE_KEY)
+    }
+    const results = await pipeline.exec()
+    const rawClicks = results.map(result => result[1]).filter(Boolean)
 
     if (!rawClicks || rawClicks.length === 0) return
 
