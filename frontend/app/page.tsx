@@ -2,24 +2,36 @@ import ShortenForm from '../src/components/ShortenForm'
 
 export default function Home() {
   return (
-    <main>
-      <div className="text-center mb-12 animate-fade-in">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-          </svg>
-          <span className="text-xs font-medium text-indigo-300">Fast & Reliable URL Shortener</span>
+    <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-black relative overflow-hidden">
+      
+      {/* Abstract geometric background elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/5 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
+
+      <div className="z-10 text-center mb-10 w-full max-w-2xl animate-fade-in">
+        <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full border border-[#333] bg-[#111]">
+          <div className="pulse-dot" />
+          <span className="text-xs font-medium text-[#aaa] uppercase tracking-widest">System Online</span>
         </div>
-        <h1 className="text-5xl font-extrabold text-white mb-4 tracking-tight leading-tight">
-          Shorten Your <span className="gradient-text">URLs</span>
+        
+        <h1 className="text-4xl md:text-5xl font-semibold text-white mb-4 tracking-tight leading-tight">
+          Link Management <br />
+          <span className="text-[#888]">Built for Speed.</span>
         </h1>
-        <p className="text-gray-400 text-lg max-w-md mx-auto leading-relaxed">
-          Create short links with custom aliases and track every click in real-time.
+        
+        <p className="text-[#888] text-base md:text-lg max-w-md mx-auto leading-relaxed">
+          Create, track, and manage short links with a minimal, high-performance interface.
         </p>
       </div>
 
-      <div className="animate-fade-in animate-delay-2">
+      <div className="z-10 w-full animate-fade-in animate-delay-1">
         <ShortenForm />
+      </div>
+
+      <div className="z-10 mt-16 text-center animate-fade-in animate-delay-2">
+        <p className="text-xs text-[#555] uppercase tracking-widest">
+          Powered by Antigravity
+        </p>
       </div>
     </main>
   )

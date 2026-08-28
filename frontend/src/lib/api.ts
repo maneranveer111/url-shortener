@@ -37,3 +37,28 @@ export async function getAnalytics(shortCode: string) {
 
   return data
 }
+
+export async function getOriginalUrl(shortCode: string) {
+  try {
+    const response = await fetch(`${API_URL}/api/original/${shortCode}`)
+
+    let data
+    try {
+      data = await response.json()
+    } catch (e) {
+      // If parsing JSON fails, it's likely a 404 HTML page or server error
+      throw new Error('Please enter a valid URL or shortname')
+    }
+
+    if (!response.ok) {
+      throw new Error(data?.error || 'Please enter a valid URL or shortname')
+    }
+
+    return data
+  } catch (error) {
+    if (error instanceof Error && error.message !== 'Failed to fetch') {
+      throw error
+    }
+    throw new Error('Please enter a valid URL or shortname')
+  }
+}
