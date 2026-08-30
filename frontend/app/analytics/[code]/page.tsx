@@ -1,4 +1,5 @@
 import { getAnalytics } from '../../../src/lib/api'
+import { FormattedDate } from '../../../src/components/FormattedDate'
 
 interface Click {
   id: number
@@ -31,21 +32,6 @@ function parseUserAgent(ua: string): { browser: string; os: string; icon: string
   else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS'
 
   return { browser, os, icon }
-}
-
-function formatTimeAgo(dateStr: string): string {
-  const now = new Date()
-  const date = new Date(dateStr)
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
-  return date.toLocaleDateString()
 }
 
 export default async function AnalyticsPage({
@@ -177,7 +163,7 @@ export default async function AnalyticsPage({
             </div>
           </div>
           <p className="text-lg font-semibold text-white">
-            {new Date(analytics.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            <FormattedDate date={analytics.createdAt} format="date" />
           </p>
         </div>
       </div>
@@ -245,18 +231,12 @@ export default async function AnalyticsPage({
                         {browser} on {os}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {new Date(click.clickedAt).toLocaleString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                          hour12: true,
-                        })}
+                        <FormattedDate date={click.clickedAt} format="full" />
                       </p>
                     </div>
                   </div>
                   <span className="text-xs text-gray-600 shrink-0">
-                    {formatTimeAgo(click.clickedAt)}
+                    <FormattedDate date={click.clickedAt} format="timeago" />
                   </span>
                 </div>
               )
