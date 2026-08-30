@@ -28,11 +28,7 @@ export default function Home() {
         <ShortenForm />
       </div>
 
-      <div className="z-10 mt-16 text-center animate-fade-in animate-delay-2">
-        <p className="text-xs text-[#555] uppercase tracking-widest">
-          Powered by Antigravity
-        </p>
-      </div>
+  
     </main>
   )
 }
