@@ -3,6 +3,7 @@ const cors = require('cors')
 
 const urlRoutes = require('./routes/url.routes')
 const analyticsRoutes = require('./routes/analytics.routes')
+const redirectRoutes = require('./routes/redirect.routes')
 
 const app = express()
 
@@ -47,7 +48,6 @@ app.get('/health', (req, res) => {
   })
 })
 
-const { redirectUrl } = require('./controllers/url.controller')
-app.get('/:shortCode', redirectUrl)
+app.use('/', redirectRoutes)
 
 module.exports = app
