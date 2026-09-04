@@ -1,4 +1,3 @@
-// server.js
 require('dotenv').config()
 
 const app = require('./src/app')
@@ -27,11 +26,19 @@ async function startServer() {
   }
 }
 
-process.on('SIGINT', async () => {
+async function shutdown() {
   console.log('\nShutting down gracefully...')
-  await prisma.$disconnect()
-  await redis.quit()
-  process.exit(0)
-})
+  try {
+    await prisma.$disconnect()
+    await redis.quit()
+  } catch (err) {
+    console.error('Error during shutdown:', err)
+  } finally {
+    process.exit(0)
+  }
+}
+
+process.on('SIGINT', shutdown)
+process.on('SIGTERM', shutdown)
 
 startServer()
