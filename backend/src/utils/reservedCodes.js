@@ -3,4 +3,8 @@ const RESERVED_CODES = new Set([
     'health', 'login', 'admin', 'docs', 'favicon'
 ])
 
-module.exports = RESERVED_CODES
+function isReserved(code) {
+    return RESERVED_CODES.has(String(code).toLowerCase())
+}
+
+module.exports = { RESERVED_CODES, isReserved }
