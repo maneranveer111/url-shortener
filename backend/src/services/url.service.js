@@ -2,6 +2,7 @@ const prisma = require('../config/database')
 const redis = require('../config/redis')
 const { encode, generateRandomCode } = require('../utils/base62')
 const { normalizeUrl } = require('../utils/urlValidator')
+const { isReserved } = require('../utils/reservedCodes')
 
 const CACHE_TTL = 86400
 
@@ -19,6 +20,13 @@ async function createShortUrl(originalUrl, customCode = null) {
   }
 
   if (customCode) {
+
+    if(isReserved(customCode)) {
+      const error = new Error('This code is reserved and cannot be used')
+        error.statusCode = 400
+        throw error
+    }
+
     const existingCode = await prisma.url.findUnique({
       where: { shortCode: customCode }
     })
