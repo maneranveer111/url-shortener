@@ -9,6 +9,25 @@ const CACHE_TTL = 86400
 
 async function createShortUrl(originalUrl, customCode = null) {
 
+  if (customCode) {
+
+    if (isReserved(customCode)) {
+      const error = new Error('This code is reserved and cannot be used')
+      error.statusCode = 400
+      throw error
+    }
+
+    const existingCode = await prisma.url.findUnique({
+      where: { shortCode: customCode }
+    })
+
+    if (existingCode) {
+      const error = new Error('CUSTOM_CODE_TAKEN')
+      error.statusCode = 409
+      throw error
+    }
+  }
+
   const normalizedUrl = normalizeUrl(originalUrl)
 
   const existingUrl = await prisma.url.findFirst({
@@ -20,21 +39,6 @@ async function createShortUrl(originalUrl, customCode = null) {
   }
 
   if (customCode) {
-
-    if(isReserved(customCode)) {
-      const error = new Error('This code is reserved and cannot be used')
-        error.statusCode = 400
-        throw error
-    }
-
-    const existingCode = await prisma.url.findUnique({
-      where: { shortCode: customCode }
-    })
-
-    if (existingCode) {
-      throw new Error('CUSTOM_CODE_TAKEN')
-    }
-
     const newUrl = await prisma.url.create({
       data: {
         originalUrl: normalizedUrl,
@@ -42,7 +46,7 @@ async function createShortUrl(originalUrl, customCode = null) {
       }
     })
 
-    await cacheUrl(newUrl.shortCode, newUrl.originalUrl, newUrl.id)
+    await cacheUrlBestEffort(newUrl.shortCode, newUrl.originalUrl, newUrl.id)
 
     return newUrl
   }
@@ -50,18 +54,22 @@ async function createShortUrl(originalUrl, customCode = null) {
   const newUrl = await prisma.url.create({
     data: {
       originalUrl: normalizedUrl,
-      shortCode: `temp_${Date.now()}` 
+      shortCode: `temp_${Date.now()}`
     }
   })
 
-  const shortCode = encode(newUrl.id)
+  let shortCode = encode(newUrl.id)
+
+  if (isReserved(shortCode)) {
+    shortCode = generateRandomCode(6)
+  }
 
   const updatedUrl = await prisma.url.update({
     where: { id: newUrl.id },
     data: { shortCode }
   })
 
-  await cacheUrl(updatedUrl.shortCode, updatedUrl.originalUrl, updatedUrl.id)
+  await cacheUrlBestEffort(updatedUrl.shortCode, updatedUrl.originalUrl, updatedUrl.id)
 
   return updatedUrl
 }
@@ -84,7 +92,7 @@ async function getUrlByShortCode(shortCode) {
 
   if (!url) return null
 
-  await cacheUrl(url.shortCode, url.originalUrl, url.id)
+  await cacheUrlBestEffort(url.shortCode, url.originalUrl, url.id)
 
   return url
 }
@@ -93,6 +101,14 @@ async function getUrlByShortCode(shortCode) {
 async function cacheUrl(shortCode, originalUrl, urlId) {
   const cacheData = JSON.stringify({ originalUrl, id: urlId })
   await redis.set(`url:${shortCode}`, cacheData, 'EX', CACHE_TTL)
+}
+
+async function cacheUrlBestEffort(shortCode, originalUrl, urlId) {
+  try {
+    await cacheUrl(shortCode, originalUrl, urlId)
+  } catch (err) {
+    console.error('Cache write failed (non-fatal):', err.message)
+  }
 }
 
 module.exports = {
