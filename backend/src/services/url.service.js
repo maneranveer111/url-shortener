@@ -9,6 +9,7 @@ const CACHE_TTL = 86400
 
 async function createShortUrl(originalUrl, customCode = null) {
 
+
   if (customCode) {
 
     if (isReserved(customCode)) {
@@ -30,49 +31,65 @@ async function createShortUrl(originalUrl, customCode = null) {
 
   const normalizedUrl = normalizeUrl(originalUrl)
 
-  const existingUrl = await prisma.url.findFirst({
-    where: { originalUrl: normalizedUrl }
-  })
 
-  if (existingUrl) {
-    return existingUrl
-  }
+  const result = await prisma.$transaction(async (tx) => {
 
-  if (customCode) {
-    const newUrl = await prisma.url.create({
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${normalizedUrl}))`
+
+    const existingUrl = await tx.url.findFirst({
+      where: { originalUrl: normalizedUrl }
+    })
+
+    if (existingUrl) {
+      return existingUrl  
+    }
+
+    if (customCode) {
+      try {
+        const newUrl = await tx.url.create({
+          data: {
+            originalUrl: normalizedUrl,
+            shortCode: customCode
+          }
+        })
+        return newUrl
+      } catch (error) {
+        if (error.code === 'P2002') {
+          const takenError = new Error('CUSTOM_CODE_TAKEN')
+          takenError.statusCode = 409
+          throw takenError
+        }
+        throw error
+      }
+    }
+
+    const newUrl = await tx.url.create({
       data: {
         originalUrl: normalizedUrl,
-        shortCode: customCode
+        shortCode: `temp_${Date.now()}`
       }
     })
 
-    await cacheUrlBestEffort(newUrl.shortCode, newUrl.originalUrl, newUrl.id)
+    let shortCode = encode(newUrl.id)
 
-    return newUrl
-  }
-
-  const newUrl = await prisma.url.create({
-    data: {
-      originalUrl: normalizedUrl,
-      shortCode: `temp_${Date.now()}`
+    if (isReserved(shortCode)) {
+      shortCode = generateRandomCode(6)
     }
+
+    const updatedUrl = await tx.url.update({
+      where: { id: newUrl.id },
+      data: { shortCode }
+    })
+
+    return updatedUrl
   })
 
-  let shortCode = encode(newUrl.id)
+  
+  await cacheUrlBestEffort(result.shortCode, result.originalUrl, result.id)
 
-  if (isReserved(shortCode)) {
-    shortCode = generateRandomCode(6)
-  }
-
-  const updatedUrl = await prisma.url.update({
-    where: { id: newUrl.id },
-    data: { shortCode }
-  })
-
-  await cacheUrlBestEffort(updatedUrl.shortCode, updatedUrl.originalUrl, updatedUrl.id)
-
-  return updatedUrl
+  return result
 }
+
 
 async function getUrlByShortCode(shortCode) {
 
