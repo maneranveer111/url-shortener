@@ -1,6 +1,8 @@
 const express = require('express')
 const cors = require('cors')
 
+const prisma = require('./config/prisma')
+
 const urlRoutes = require('./routes/url.routes')
 const analyticsRoutes = require('./routes/analytics.routes')
 const redirectRoutes = require('./routes/redirect.routes')
@@ -41,11 +43,20 @@ app.get('/', (req, res) => {
   })
 })
 
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString()
-  })
+app.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString()
+    })
+  } catch (err) {
+    console.error('Health check DB error:', err.message)
+    res.status(500).json({
+      status: 'db error',
+      timestamp: new Date().toISOString()
+    })
+  }
 })
 
 app.use('/', redirectRoutes)
