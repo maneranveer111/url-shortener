@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 
-const prisma = require('./config/prisma')
+const prisma = require('./config/database')
 
 const urlRoutes = require('./routes/url.routes')
 const analyticsRoutes = require('./routes/analytics.routes')
